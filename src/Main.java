@@ -1,4 +1,6 @@
+import java.util.Collection;
 import java.util.Scanner;
+import java.util.ArrayList;
 
 public class Main {
     public static void main(String[] args) {
@@ -8,11 +10,8 @@ public class Main {
 
         // Here you would create an instance of your implementation of NumberRangeSummarizer
         // and use it to process the input.
-        // For example:
-        // NumberRangeSummarizer summarizer = new YourImplementation();
-        // Collection<Integer> numbers = summarizer.collect(input);
-        // String result = summarizer.summarizeCollection(numbers);
-        // System.out.println("Summarized output: " + result);
+        CommaDelimiter summarizer = new CommaDelimiter();
+        System.out.println("Summarized output: " + summarizer.summarizeCollection(summarizer.collect(input)));
 
         scanner.close();
     }
