@@ -1,66 +1,85 @@
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import java.util.Set;
 import java.util.ArrayList;
-import java.util.HashSet;
+import java.util.Arrays;
+import java.util.TreeSet;
+import java.util.stream.Collectors;
 
 public class CommaDelimiter implements NumberRangeSummarizer {
+    
+  
+    // Collects and parses the input string into a collection of integers.
     @Override
     public Collection<Integer> collect(String input) {
-        // Implementation here
-        String[] strNumbers = input.split(",");
-        Collection<Integer> numberCollection = new ArrayList<>(); // To hold the collected numbers
-
-        for (String str : strNumbers) {
-            numberCollection.add(Integer.parseInt(str.trim())); // Convert to integer and add to "numbers" array
+        // Handle null or empty input
+        if (input == null || input.trim().isEmpty()) {
+            return Collections.emptyList();
         }
-        return numberCollection;
+
+        // Stream API for processing the input
+        return Arrays.stream(input.split(",")) // "1, 2, 3" -> ["1", " 2", " 3"]
+                .map(String::trim)               // ["1", " 2", " 3"] -> ["1", "2", "3"]
+                .filter(s -> !s.isEmpty())       // Handles cases like "1,,2"
+                .map(Integer::parseInt)          // ["1", "2", "3"] -> [1, 2, 3]
+                .collect(Collectors.toList());   // Collect results into a List
     }
+
+
+    // Summarizes a collection of integers into a range string.
+    @Override
     public String summarizeCollection(Collection<Integer> input) {
-        // Implementation here
-        List<Integer> numbers = new ArrayList<>(input); // Convert collection to sorted list for easier processing
-        Collections.sort(numbers);
-
-        ArrayList<ArrayList<Integer>> twoDArrayList = new ArrayList<>(); // To hold the final ranges, it now holds ArrayLists of ranges
-        int arrIndex = 0; // Index for the outer ArrayList
-        Set<Integer> visited = new HashSet<>(); // To keep track of visited elements
-
-        for (int i = 0; i < numbers.size(); i++) {
-            int currentNum = numbers.get(i);
-            // Skip already visited elements
-            if (!visited.contains(numbers.get(i))) {
-                twoDArrayList.add(new ArrayList<>()); // Create a new sublist for a new range
-                twoDArrayList.get(arrIndex).add(numbers.get(i)); // Add the starting number of the range
-                visited.add(numbers.get(i));
-               for(int j = i+1; j < numbers.size(); j++){
-                    int nextNum = numbers.get(j);
-                    if ( nextNum == currentNum + 1 ){ // Check for sequential numbers
-                        twoDArrayList.get(arrIndex).add(nextNum); // Add to range
-                        visited.add(nextNum); // Mark as visited
-                        currentNum = nextNum; // Update current number
-                    }
-                    else{
-                        break; // Break if not sequential
-                    }
-                }
-                arrIndex++; // Move to next sublist for new range
-            }
-            
+        if (input == null || input.isEmpty()) {
+            return "";
         }
-        // Build the summarized string
+
+        // Using a TreeSet automatically handles sorting and de-duplication
+        // in one step. This is much cleaner than sorting a List and
+        // using a separate 'visited' Set.
+        List<Integer> sortedUniqueNumbers = new ArrayList<>(new TreeSet<>(input));
+
         StringBuilder summarizedString = new StringBuilder();
-        for (int m = 0; m < arrIndex; m++) {
-            ArrayList<Integer> rangeList = twoDArrayList.get(m);
-            if (rangeList.size() == 1) {
-                summarizedString.append(rangeList.get(0)); // Single number, no range
+        
+        // Start the first range
+        int rangeStart = sortedUniqueNumbers.get(0);
+        int rangeEnd = sortedUniqueNumbers.get(0);
+
+        // Iterate from the second number to compare with the previous
+        for (int i = 1; i < sortedUniqueNumbers.size(); i++) {
+            int currentNum = sortedUniqueNumbers.get(i);
+
+            if (currentNum == rangeEnd + 1) {
+                // Number is sequential, extend the current range
+                rangeEnd = currentNum;
             } else {
-                summarizedString.append(rangeList.get(0)).append("-").append(rangeList.get(rangeList.size() - 1)); // Format as range
-            }
-            if (m < arrIndex - 1) {
-                summarizedString.append(", "); // Add comma separator except after the last range
+                // Not sequential, finalize the previous range and add it
+                appendRange(summarizedString, rangeStart, rangeEnd);
+                
+                // Start a new range
+                rangeStart = currentNum;
+                rangeEnd = currentNum;
             }
         }
+
+        // After the loop, append the last pending range
+        appendRange(summarizedString, rangeStart, rangeEnd);
+
         return summarizedString.toString();
+    }
+
+    // Helper method to append a formatted range
+    private void appendRange(StringBuilder sb, int start, int end) {
+        // Add a comma and space if this is not the first item
+        if (sb.length() > 0) {
+            sb.append(", ");
+        }
+
+        if (start == end) {
+            // Single number, "1"
+            sb.append(start);
+        } else {
+            // A range, "6-8"
+            sb.append(start).append("-").append(end);
+        }
     }
 }
